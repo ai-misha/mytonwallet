@@ -9,10 +9,6 @@ on:
       - cat-theme
   workflow_dispatch:
 
-concurrency:
-  group: cat-builds-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   # build_sdk.sh refuses to run in CI without it
   AGENT_API_URL: https://agent.mywallet.io/api
@@ -22,6 +18,9 @@ jobs:
     name: Android debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    concurrency:
+      group: cat-android-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,37 +73,42 @@ jobs:
     name: iOS unsigned IPA
     runs-on: macos-26
     timeout-minutes: 120
+    concurrency:
+      group: cat-ios-${{ github.ref }}
+      cancel-in-progress: true
     env:
-      IOS_REQUIRED_SDK: "27.0"
+      IOS_PREFERRED_SDK: "27.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select an Xcode carrying the required iOS SDK
+      # The release pipeline wants iOS SDK 27, which GitHub-hosted runners do not have yet,
+      # so this takes the newest Xcode available and warns when it is older than that.
+      - name: Select the newest Xcode
         run: |
           set -euo pipefail
-          chosen=""
-          chosen_sdk=""
-          installed=""
+          best=""
+          best_sdk=""
           for app in /Applications/Xcode*.app; do
             developer_dir="$app/Contents/Developer"
             [ -d "$developer_dir" ] || continue
             sdk=$(DEVELOPER_DIR="$developer_dir" xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)
             [ -n "$sdk" ] || continue
-            installed="$installed$app iphoneos$sdk"$'\n'
-            [ "$(printf '%s\n%s\n' "$sdk" "$IOS_REQUIRED_SDK" | sort -V | head -1)" = "$IOS_REQUIRED_SDK" ] || continue
-            if [ -z "$chosen" ] || [ "$(printf '%s\n%s\n' "$sdk" "$chosen_sdk" | sort -V | head -1)" = "$sdk" ]; then
-              chosen="$developer_dir"
-              chosen_sdk="$sdk"
+            echo "$app iphoneos$sdk"
+            if [ -z "$best" ] || [ "$(printf '%s\n%s\n' "$sdk" "$best_sdk" | sort -V | tail -1)" = "$sdk" ]; then
+              best="$developer_dir"
+              best_sdk="$sdk"
             fi
           done
-          printf 'Installed:\n%s' "$installed"
-          if [ -z "$chosen" ]; then
-            echo "::error::No installed Xcode carries iOS SDK $IOS_REQUIRED_SDK"
+          if [ -z "$best" ]; then
+            echo "::error::No Xcode with an iOS SDK found"
             exit 1
           fi
-          echo "Using $chosen (iphoneos$chosen_sdk)"
-          echo "DEVELOPER_DIR=$chosen" >> "$GITHUB_ENV"
+          if [ "$(printf '%s\n%s\n' "$best_sdk" "$IOS_PREFERRED_SDK" | sort -V | head -1)" != "$IOS_PREFERRED_SDK" ]; then
+            echo "::warning::Building with iOS SDK $best_sdk, the release pipeline uses $IOS_PREFERRED_SDK"
+          fi
+          echo "Using $best (iphoneos$best_sdk)"
+          echo "DEVELOPER_DIR=$best" >> "$GITHUB_ENV"
 
       - name: Set up Node
         uses: actions/setup-node@v4
