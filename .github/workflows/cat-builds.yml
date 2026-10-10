@@ -165,6 +165,13 @@ jobs:
           path: ${{ runner.temp }}/derived-data/SourcePackages
           key: cat-ios-spm-${{ hashFiles('mobile/ios/**/Package.resolved') }}
 
+      # As in package-and-publish.yml: the image ships Xcode without it, and UIComponents has
+      # Metal shaders
+      - name: Install the Metal toolchain
+        run: |
+          xcodebuild -downloadComponent MetalToolchain
+          xcrun --sdk iphoneos metal --version
+
       - name: Build the app
         run: |
           set -o pipefail
