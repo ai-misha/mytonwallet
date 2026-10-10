@@ -124,9 +124,41 @@ jobs:
       - name: Build the mobile SDK
         run: npm run mobile:build:staging
 
+      # Same scheme as in package-and-publish.yml: the packages are restored and resolved in steps
+      # of their own, so they get cached even when the build that follows fails. They stay under the
+      # derived data root, where the Crashlytics script phase looks for them.
+      - name: Restore resolved Swift packages
+        id: spm-cache
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/derived-data/SourcePackages
+          key: cat-ios-spm-${{ hashFiles('mobile/ios/**/Package.resolved') }}
+          restore-keys: |
+            cat-ios-spm-
+
+      - name: Resolve Swift packages
+        id: spm-resolve
+        continue-on-error: true
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -workspace mobile/ios/App/App.xcworkspace \
+            -scheme MyTonWallet \
+            -derivedDataPath "$RUNNER_TEMP/derived-data"
+
+      - name: Save resolved Swift packages
+        if: steps.spm-resolve.outcome == 'success' && steps.spm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/derived-data/SourcePackages
+          key: cat-ios-spm-${{ hashFiles('mobile/ios/**/Package.resolved') }}
+
       - name: Build the app
         run: |
           set -o pipefail
+          # One run should show every broken target, not only the first one
+          defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
           xcodebuild \
             -workspace mobile/ios/App/App.xcworkspace \
             -scheme MyTonWallet \
@@ -139,6 +171,22 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | xcbeautify --renderer github-actions
+
+      # xcbeautify drops every line it does not recognize, and the reason for a failure is often
+      # among them, so the raw log gets searched here
+      - name: Show the build errors
+        if: failure()
+        run: |
+          log="$RUNNER_TEMP/xcodebuild.log"
+          [ -f "$log" ] || exit 0
+          echo "=== Lines with errors"
+          grep -n -E "error:|fatal error|Command .* failed|Stack dump|signal [0-9]+|BUILD FAILED" "$log" | head -n 300 || true
+          echo "=== Failed build commands"
+          sed -n '/The following build commands failed/,$p' "$log" | head -n 100
+          echo "=== The first errors in context"
+          grep -n -B 4 -A 12 -m 25 -E "error:" "$log" | head -n 700 || true
+          echo "=== The end of the log"
+          tail -n 60 "$log" | sed 's/^/  /'
 
       - name: Upload the build log
         if: failure()
