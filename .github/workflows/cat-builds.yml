@@ -73,7 +73,9 @@ jobs:
 
   ios:
     name: iOS unsigned IPA
-    runs-on: macos-26
+    # The same image the release pipeline uses: the app needs Xcode 27 (the Xcode 26 compiler
+    # crashes on UIHome, and its actool cannot read the Icon Composer app icon)
+    runs-on: xcode-27
     timeout-minutes: 120
     concurrency:
       group: cat-ios-${{ github.ref }}
@@ -84,33 +86,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # The release pipeline wants iOS SDK 27, which GitHub-hosted runners do not have yet,
-      # so this takes the newest Xcode available and warns when it is older than that.
-      - name: Select the newest Xcode
+      # Like the release pipeline: the oldest Xcode that carries the required iOS SDK (newer ones
+      # are betas nothing asked for), or the newest one available when none does, with a warning.
+      - name: Select Xcode
         run: |
           set -euo pipefail
-          best=""
-          best_sdk=""
+          chosen=""
+          chosen_sdk=""
+          newest=""
+          newest_sdk=""
           for app in /Applications/Xcode*.app; do
             developer_dir="$app/Contents/Developer"
             [ -d "$developer_dir" ] || continue
             sdk=$(DEVELOPER_DIR="$developer_dir" xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)
             [ -n "$sdk" ] || continue
             echo "$app iphoneos$sdk"
-            if [ -z "$best" ] || [ "$(printf '%s\n%s\n' "$sdk" "$best_sdk" | sort -V | tail -1)" = "$sdk" ]; then
-              best="$developer_dir"
-              best_sdk="$sdk"
+            if [ -z "$newest" ] || [ "$(printf '%s\n%s\n' "$sdk" "$newest_sdk" | sort -V | tail -1)" = "$sdk" ]; then
+              newest="$developer_dir"
+              newest_sdk="$sdk"
+            fi
+            [ "$(printf '%s\n%s\n' "$sdk" "$IOS_PREFERRED_SDK" | sort -V | head -1)" = "$IOS_PREFERRED_SDK" ] || continue
+            if [ -z "$chosen" ] || [ "$(printf '%s\n%s\n' "$sdk" "$chosen_sdk" | sort -V | head -1)" = "$sdk" ]; then
+              chosen="$developer_dir"
+              chosen_sdk="$sdk"
             fi
           done
-          if [ -z "$best" ]; then
-            echo "::error::No Xcode with an iOS SDK found"
-            exit 1
+          if [ -z "$chosen" ]; then
+            if [ -z "$newest" ]; then
+              echo "::error::No Xcode with an iOS SDK found"
+              exit 1
+            fi
+            echo "::warning::No Xcode carries iOS SDK $IOS_PREFERRED_SDK, building with iOS SDK $newest_sdk"
+            chosen="$newest"
+            chosen_sdk="$newest_sdk"
           fi
-          if [ "$(printf '%s\n%s\n' "$best_sdk" "$IOS_PREFERRED_SDK" | sort -V | head -1)" != "$IOS_PREFERRED_SDK" ]; then
-            echo "::warning::Building with iOS SDK $best_sdk, the release pipeline uses $IOS_PREFERRED_SDK"
-          fi
-          echo "Using $best (iphoneos$best_sdk)"
-          echo "DEVELOPER_DIR=$best" >> "$GITHUB_ENV"
+          echo "Using $chosen (iphoneos$chosen_sdk)"
+          echo "DEVELOPER_DIR=$chosen" >> "$GITHUB_ENV"
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -157,6 +168,13 @@ jobs:
       - name: Build the app
         run: |
           set -o pipefail
+          # The Release build ends with a script phase that uploads the symbols to the upstream
+          # Firebase project. A fork has no business there, so the uploader becomes a no-op.
+          crashlytics_run="$RUNNER_TEMP/derived-data/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"
+          if [ -f "$crashlytics_run" ]; then
+            chmod u+w "$crashlytics_run"
+            printf '#!/bin/sh\necho "Crashlytics symbol upload skipped"\n' > "$crashlytics_run"
+          fi
           # One run should show every broken target, not only the first one
           defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
           xcodebuild \
@@ -183,6 +201,8 @@ jobs:
           grep -n -E "error:|fatal error|Command .* failed|Stack dump|signal [0-9]+|BUILD FAILED" "$log" | head -n 300 || true
           echo "=== Failed build commands"
           sed -n '/The following build commands failed/,$p' "$log" | head -n 100
+          echo "=== Compiler crashes"
+          grep -n -B 2 -A 14 -m 5 "Stack dump:" "$log" | head -n 120 || true
           echo "=== The first errors in context"
           grep -n -B 4 -A 12 -m 25 -E "error:" "$log" | head -n 700 || true
           echo "=== The end of the log"
