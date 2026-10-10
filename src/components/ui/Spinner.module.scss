@@ -11,6 +11,32 @@ $defaultSize: 2rem;
   height: var(--spinner-size, $defaultSize);
 
   color: var(--color-accent);
+
+  // 🐱 Static cat ears over the spinning ring turn the loader into a little cat head
+  &::before,
+  &::after {
+    content: "";
+
+    position: absolute;
+    top: -12%;
+
+    width: 36%;
+    height: 34%;
+
+    background-color: currentColor;
+
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 18'%3E%3Cpath d='M0 18 L7.4 2.2 Q10 -1.8 12.6 2.2 L20 18 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  }
+
+  &::before {
+    left: 4%;
+    transform: rotate(-22deg);
+  }
+
+  &::after {
+    right: 4%;
+    transform: rotate(22deg);
+  }
 }
 
 .inner {

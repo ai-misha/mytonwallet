@@ -1,0 +1,178 @@
+.root {
+  --cat-iris: #F2B33D;
+
+  overflow: visible;
+  display: block;
+
+  :global(html.theme-dark) & {
+    --cat-iris: var(--cat-eye-glow);
+  }
+}
+
+.fur {
+  fill: var(--cat-fur);
+}
+
+.muzzle {
+  opacity: 0.9;
+  fill: #FFF3E6;
+}
+
+.skin {
+  fill: var(--cat-skin);
+}
+
+.stripe {
+  fill: none;
+  stroke: var(--cat-fur-stripe);
+  stroke-linecap: round;
+  stroke-width: 3.2;
+}
+
+.blush {
+  opacity: 0.35;
+  fill: var(--cat-nose);
+}
+
+.earLeft,
+.earRight {
+  transform-box: fill-box;
+  transition: transform 200ms ease;
+}
+
+.earLeft {
+  transform-origin: 80% 100%;
+}
+
+.earRight {
+  transform-origin: 20% 100%;
+}
+
+.eyes {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: cat-blink 4.5s infinite;
+}
+
+.iris {
+  fill: var(--cat-iris);
+}
+
+.pupil,
+.shine {
+  transform: translate(calc(var(--look-x, 0) * 1px), calc(var(--look-y, 0) * 1px));
+  transition: transform 120ms ease-out;
+}
+
+.pupil {
+  fill: var(--cat-eye);
+}
+
+.shine {
+  fill: #FFFFFF;
+}
+
+.closedEyes {
+  opacity: 0;
+
+  fill: none;
+  stroke: var(--cat-eye);
+  stroke-linecap: round;
+  stroke-width: 2.6;
+}
+
+.nose {
+  fill: var(--cat-nose);
+}
+
+.mouth {
+  fill: none;
+  stroke: var(--cat-eye);
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.tongue {
+  opacity: 0;
+  fill: var(--cat-nose);
+}
+
+.whiskers {
+  fill: none;
+  stroke: var(--cat-head-whisker, rgba(70, 50, 35, 0.55));
+  stroke-linecap: round;
+  stroke-width: 1.2;
+}
+
+.sleeping {
+  .eyes {
+    opacity: 0;
+    animation: none;
+  }
+
+  .closedEyes {
+    opacity: 1;
+  }
+}
+
+.happy {
+  .eyes {
+    opacity: 0;
+    animation: none;
+  }
+
+  .closedEyes {
+    opacity: 1;
+  }
+
+  .tongue {
+    opacity: 1;
+  }
+
+  .earLeft {
+    animation: cat-ear-wiggle-left 400ms ease-in-out 2;
+  }
+
+  .earRight {
+    animation: cat-ear-wiggle-right 400ms ease-in-out 2;
+  }
+}
+
+:global(html.animation-level-0) .root * {
+  transition: none !important;
+  animation: none !important;
+}
+
+@keyframes cat-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes cat-ear-wiggle-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+
+@keyframes cat-ear-wiggle-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(14deg);
+  }
+}

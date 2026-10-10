@@ -84,10 +84,69 @@ $contentMaxWidth: 31.4375rem;
 }
 
 .logo {
+  position: relative;
+
   width: 10rem;
   min-width: 10rem;
   height: 10rem;
   min-height: 10rem;
+}
+
+.catLogo {
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem;
+}
+
+.catZzz {
+  pointer-events: none;
+
+  position: absolute;
+  top: 0.5rem;
+  right: -0.5rem;
+
+  font-weight: 800;
+  color: var(--color-accent);
+
+  span {
+    position: absolute;
+    opacity: 0;
+    animation: cat-zzz 3s ease-in-out infinite;
+
+    &:nth-child(1) {
+      font-size: 0.875rem;
+    }
+
+    &:nth-child(2) {
+      font-size: 1.125rem;
+      animation-delay: 1s;
+    }
+
+    &:nth-child(3) {
+      font-size: 1.5rem;
+      animation-delay: 2s;
+    }
+  }
+
+  :global(html.animation-level-0) & span {
+    animation: none;
+  }
+}
+
+@keyframes cat-zzz {
+  0% {
+    transform: translate(0, 1.5rem) scale(0.6);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(1.25rem, -1rem) scale(1);
+    opacity: 0;
+  }
 }
 
 .passwordInputWrapper {

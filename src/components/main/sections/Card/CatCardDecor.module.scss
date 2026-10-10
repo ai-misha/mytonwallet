@@ -1,0 +1,247 @@
+.back,
+.front {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.back {
+  --cat-card-whisker: rgba(150, 105, 70, 0.55);
+
+  :global(html.theme-dark) & {
+    --cat-card-whisker: rgba(255, 236, 220, 0.45);
+  }
+}
+
+.front {
+  z-index: 7;
+}
+
+.ear,
+.paw {
+  pointer-events: auto;
+  cursor: var(--custom-cursor, pointer);
+  position: absolute;
+  overflow: visible;
+}
+
+.ear {
+  top: -2.375rem;
+
+  width: 4.25rem;
+  height: 3.5rem;
+
+  filter: drop-shadow(0 -0.0625rem 0.125rem rgba(0, 0, 0, 0.12));
+
+  transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &.left {
+    left: 9%;
+    transform-origin: 50% 100%;
+    transform: rotate(-14deg);
+  }
+
+  &.right {
+    right: 9%;
+    transform-origin: 50% 100%;
+    transform: rotate(14deg);
+  }
+
+  @media (hover: hover) {
+    &.left:hover {
+      transform: rotate(-20deg) scaleY(1.06);
+    }
+
+    &.right:hover {
+      transform: rotate(20deg) scaleY(1.06);
+    }
+  }
+
+  &.twitching.left {
+    animation: cat-card-ear-left 600ms ease-in-out;
+  }
+
+  &.twitching.right {
+    animation: cat-card-ear-right 600ms ease-in-out;
+  }
+}
+
+.earFur,
+.pawFur {
+  fill: var(--cat-fur);
+}
+
+.earSkin,
+.pawBean {
+  fill: var(--cat-skin);
+}
+
+.earTuft {
+  fill: none;
+  stroke: #FFF3E6;
+  stroke-linecap: round;
+  stroke-width: 1.4;
+}
+
+.whiskers {
+  position: absolute;
+  top: 52%;
+  width: 2.5rem;
+  height: 1.875rem;
+
+  path {
+    fill: none;
+    stroke: var(--cat-card-whisker);
+    stroke-linecap: round;
+    stroke-width: 1.3;
+  }
+
+  &.left {
+    left: -1.75rem;
+    transform-origin: 100% 50%;
+    animation: cat-whisker-left 6s ease-in-out infinite;
+  }
+
+  &.right {
+    right: -1.75rem;
+    transform-origin: 50% 50%;
+    transform: scaleX(-1);
+    animation: cat-whisker-right 6s ease-in-out infinite;
+  }
+
+  // On narrow screens the card nearly touches the screen edges, so the whiskers get shorter
+
+  @media (max-width: 480px) {
+    width: 1.5rem;
+
+    &.left {
+      left: -0.875rem;
+    }
+
+    &.right {
+      right: -0.875rem;
+    }
+  }
+}
+
+.paw {
+  bottom: -0.75rem;
+  width: 2.75rem;
+  height: 1.75rem;
+  filter: drop-shadow(0 0.125rem 0.1875rem rgba(0, 0, 0, 0.2));
+
+  &.left {
+    left: 18%;
+    transform: rotate(-6deg);
+  }
+
+  &.right {
+    right: 18%;
+    transform: rotate(6deg);
+  }
+
+  .purring & {
+    animation: cat-paw-knead 400ms ease-in-out infinite alternate;
+  }
+
+  .purring &.right {
+    animation-delay: 200ms;
+  }
+}
+
+.pawLine {
+  fill: none;
+  stroke: var(--cat-fur-dark);
+  stroke-linecap: round;
+  stroke-width: 1.4;
+}
+
+:global(html.animation-level-0) {
+  .ear,
+  .paw,
+  .whiskers {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@keyframes cat-card-ear-left {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+  }
+
+  25% {
+    transform: rotate(-34deg) scaleY(0.85);
+  }
+
+  55% {
+    transform: rotate(-8deg);
+  }
+
+  75% {
+    transform: rotate(-22deg) scaleY(0.95);
+  }
+}
+
+@keyframes cat-card-ear-right {
+  0%,
+  100% {
+    transform: rotate(14deg);
+  }
+
+  25% {
+    transform: rotate(34deg) scaleY(0.85);
+  }
+
+  55% {
+    transform: rotate(8deg);
+  }
+
+  75% {
+    transform: rotate(22deg) scaleY(0.95);
+  }
+}
+
+@keyframes cat-whisker-left {
+  0%,
+  90%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  93% {
+    transform: rotate(-6deg);
+  }
+
+  96% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes cat-whisker-right {
+  0%,
+  90%,
+  100% {
+    transform: scaleX(-1) rotate(0deg);
+  }
+
+  93% {
+    transform: scaleX(-1) rotate(-6deg);
+  }
+
+  96% {
+    transform: scaleX(-1) rotate(4deg);
+  }
+}
+
+@keyframes cat-paw-knead {
+  0% {
+    transform: translateY(0) scaleY(1);
+  }
+
+  100% {
+    transform: translateY(-0.25rem) scaleY(0.92);
+  }
+}

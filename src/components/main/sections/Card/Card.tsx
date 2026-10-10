@@ -59,6 +59,7 @@ import SensitiveData from '../../../ui/SensitiveData';
 import Spinner from '../../../ui/Spinner';
 import Transition from '../../../ui/Transition';
 import CardAddress from './CardAddress';
+import CatCardDecor from './CatCardDecor';
 import CurrencySwitcherMenu from './CurrencySwitcherMenu';
 import CustomCardManager from './CustomCardManager';
 import SeasonalTheming from './SeasonalTheming';
@@ -425,6 +426,7 @@ function Card({
         glare={CARD_GLARE}
         className={styles.tiltArea}
       >
+        <CatCardDecor layer="back" />
         <div
           className={
             buildClassName(
@@ -503,6 +505,7 @@ function Card({
             )}
           </div>
         </div>
+        <CatCardDecor layer="front" />
       </CardTilt>
 
     </div>

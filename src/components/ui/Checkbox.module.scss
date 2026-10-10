@@ -43,13 +43,14 @@
   // noinspection CssUnknownTarget
   &::after {
     opacity: 0;
-    background: center no-repeat url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTguODI0IDE0Ljc4NmMuMzk2IDAgLjczNy0uMTk3Ljk2Ny0uNTQ5bDQuOTExLTcuNjhjLjE0My0uMjMuMjc1LS40OTQuMjc1LS43NDYgMC0uNTM5LS40ODQtLjkwMS0xLS45MDEtLjMzIDAtLjYyNi4xNzUtLjg1Ny41NDlsLTQuMzQgNi45NjUtMi4wNDMtMi42MDNjLS4yNjQtLjM0MS0uNTI3LS40NjItLjg1Ny0uNDYyLS41MzggMC0uOTU2LjQyOS0uOTU2Ljk3OCAwIC4yNjQuMS41MDUuMjg2LjczNmwyLjU5MyAzLjE2NGMuMjk2LjM4NS42MTUuNTUgMS4wMjEuNTVaIiBmaWxsPSIjZmZmIi8+PC9zdmc+);
+    // A paw print instead of a check mark 🐾
+    background: center no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 32 32' fill='%23FFFFFF'%3E%3Cellipse cx='12' cy='16.2' rx='5.4' ry='4.5'/%3E%3Cellipse cx='4.9' cy='10.6' rx='2.2' ry='2.9' transform='rotate(-22 4.9 10.6)'/%3E%3Cellipse cx='9.3' cy='5.9' rx='2.35' ry='3.05' transform='rotate(-6 9.3 5.9)'/%3E%3Cellipse cx='14.7' cy='5.9' rx='2.35' ry='3.05' transform='rotate(6 14.7 5.9)'/%3E%3Cellipse cx='19.1' cy='10.6' rx='2.2' ry='2.9' transform='rotate(22 19.1 10.6)'/%3E%3C/svg%3E");
     background-size: contain;
 
     @include mixins.transition("opacity 150ms");
 
     :global(html.theme-dark.is-white-accent) & {
-      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTguODI0IDE0Ljc4NmMuMzk2IDAgLjczNy0uMTk3Ljk2Ny0uNTQ5bDQuOTExLTcuNjhjLjE0My0uMjMuMjc1LS40OTQuMjc1LS43NDYgMC0uNTM5LS40ODQtLjkwMS0xLS45MDEtLjMzIDAtLjYyNi4xNzUtLjg1Ny41NDlsLTQuMzQgNi45NjUtMi4wNDMtMi42MDNjLS4yNjQtLjM0MS0uNTI3LS40NjItLjg1Ny0uNDYyLS41MzggMC0uOTU2LjQyOS0uOTU2Ljk3OCAwIC4yNjQuMS41MDUuMjg2LjczNmwyLjU5MyAzLjE2NGMuMjk2LjM4NS42MTUuNTUgMS4wMjEuNTVaIiBmaWxsPSIjMDAwIi8+PC9zdmc+);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 32 32' fill='%23000000'%3E%3Cellipse cx='12' cy='16.2' rx='5.4' ry='4.5'/%3E%3Cellipse cx='4.9' cy='10.6' rx='2.2' ry='2.9' transform='rotate(-22 4.9 10.6)'/%3E%3Cellipse cx='9.3' cy='5.9' rx='2.35' ry='3.05' transform='rotate(-6 9.3 5.9)'/%3E%3Cellipse cx='14.7' cy='5.9' rx='2.35' ry='3.05' transform='rotate(6 14.7 5.9)'/%3E%3Cellipse cx='19.1' cy='10.6' rx='2.2' ry='2.9' transform='rotate(22 19.1 10.6)'/%3E%3C/svg%3E");
     }
   }
 }
@@ -62,5 +63,20 @@
 
   &::after {
     opacity: 1;
+    animation: cat-paw-stamp 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    :global(html.animation-level-0) & {
+      animation: none;
+    }
+  }
+}
+
+@keyframes cat-paw-stamp {
+  0% {
+    transform: scale(0.3) rotate(-30deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
   }
 }

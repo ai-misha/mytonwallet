@@ -1,0 +1,137 @@
+@use "../../styles/mixins";
+
+.root {
+  pointer-events: none;
+
+  position: fixed;
+  z-index: 50;
+  top: 34%;
+  right: var(--safe-area-right);
+  transform-origin: 100% 100%;
+  // Rotated around the bottom-right corner, so the cat peeks out from the right edge of the screen,
+  // where it covers less of the controls than in a corner
+  transform: rotate(-90deg);
+
+  overflow: hidden;
+
+  width: 5.5rem;
+  height: 8rem;
+
+  @include mixins.respond-below(xs) {
+    width: 4.5rem;
+    height: 7rem;
+  }
+}
+
+.cat {
+  cursor: var(--custom-cursor, pointer);
+
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform: translateY(110%);
+
+  width: 100%;
+  height: 5.5rem;
+
+  transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  .peeking & {
+    pointer-events: auto;
+    transform: translateY(32%);
+  }
+
+  .peeking &:hover,
+  .happy & {
+    transform: translateY(12%);
+  }
+
+  :global(html.animation-level-0) & {
+    transition: none;
+  }
+
+  @include mixins.respond-below(xs) {
+    height: 4.5rem;
+  }
+}
+
+.head {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0.125rem 0.375rem rgba(0, 0, 0, 0.18));
+}
+
+// Paws gripping the bottom edge of the screen
+.paw {
+  position: absolute;
+  bottom: 30%;
+
+  width: 26%;
+  height: 16%;
+  border-radius: 50% 50% 40% 40%;
+
+  background-color: var(--cat-fur);
+  box-shadow: inset 0 -0.125rem 0 var(--cat-fur-dark);
+
+  &::before {
+    content: "";
+
+    position: absolute;
+    inset: 18% 18% 30%;
+
+    background-color: var(--cat-skin);
+
+    mask: var(--cat-paw-mask) center / contain no-repeat;
+  }
+}
+
+.pawLeft {
+  left: 14%;
+}
+
+.pawRight {
+  right: 14%;
+}
+
+.hearts {
+  pointer-events: none;
+
+  position: absolute;
+  top: -10%;
+  left: 0;
+
+  width: 100%;
+
+  font-size: 1.125rem;
+  text-align: center;
+
+  span {
+    display: inline-block;
+    animation: cat-heart-float 1300ms ease-out forwards;
+
+    &:nth-child(2) {
+      animation-delay: 120ms;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 240ms;
+    }
+  }
+}
+
+@keyframes cat-heart-float {
+  0% {
+    transform: translateY(0.5rem) scale(0.4);
+    opacity: 0;
+  }
+
+  25% {
+    transform: translateY(0) scale(1.1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-2rem) scale(1);
+    opacity: 0;
+  }
+}
