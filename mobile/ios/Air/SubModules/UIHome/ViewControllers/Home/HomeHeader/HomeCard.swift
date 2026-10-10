@@ -36,6 +36,9 @@ final class HomeCard: UICollectionViewCell {
     }
     private var motionObservation: ObserveToken?
     private let cardBackground = HomeCardBackground()
+    // 🐱 Ears and whiskers behind the card, paws in front of it
+    private let catBack = CatCardDecorView(part: .back)
+    private let catFront = CatCardDecorView(part: .front)
     private let cardPromotion = HomeCardPromotionView()
     var cardContentMaskingContainer: UIView!
     private var cardContentClipTransform = CGAffineTransform.identity
@@ -92,6 +95,15 @@ final class HomeCard: UICollectionViewCell {
             cardSurface.bottomAnchor.constraint(equalTo: cardPresentation.bottomAnchor),
         ])
 
+        catBack.translatesAutoresizingMaskIntoConstraints = false
+        cardSurface.addSubview(catBack)
+        NSLayoutConstraint.activate([
+            catBack.topAnchor.constraint(equalTo: cardSurface.topAnchor),
+            catBack.leadingAnchor.constraint(equalTo: cardSurface.leadingAnchor),
+            catBack.trailingAnchor.constraint(equalTo: cardSurface.trailingAnchor),
+            catBack.bottomAnchor.constraint(equalTo: cardSurface.bottomAnchor),
+        ])
+
         cardBackground.isAccessibilityElement = false
         cardBackground.accessibilityElementsHidden = true
         cardBackground.isUserInteractionEnabled = false
@@ -123,6 +135,15 @@ final class HomeCard: UICollectionViewCell {
         cardContent.isAccessibilityElement = false
         cardContent.translatesAutoresizingMaskIntoConstraints = true
         cardContentMaskingContainer.addSubview(cardContent)
+
+        catFront.translatesAutoresizingMaskIntoConstraints = false
+        cardSurface.addSubview(catFront)
+        NSLayoutConstraint.activate([
+            catFront.topAnchor.constraint(equalTo: cardSurface.topAnchor),
+            catFront.leadingAnchor.constraint(equalTo: cardSurface.leadingAnchor),
+            catFront.trailingAnchor.constraint(equalTo: cardSurface.trailingAnchor),
+            catFront.bottomAnchor.constraint(equalTo: cardSurface.bottomAnchor),
+        ])
 
         miniatureContent.isAccessibilityElement = false
         miniatureContent.accessibilityElementsHidden = true
@@ -181,6 +202,11 @@ final class HomeCard: UICollectionViewCell {
             }
             UIView.animate(withDuration: isCollapsed ? 0.25 : 0.05, delay: isCollapsed ? 0.1 : 0, options: isCollapsed ? [.curveEaseOut] : [.curveEaseIn]) {
                 self.miniatureContent.alpha = isCollapsed ? 1 : 0
+            }
+            // The cat parts only fit the full-size card, so they wait for it to finish expanding
+            UIView.animate(withDuration: isCollapsed ? 0.15 : 0.25, delay: isCollapsed ? 0 : 0.25, options: [.beginFromCurrentState]) {
+                self.catBack.alpha = isCollapsed ? 0 : 1
+                self.catFront.alpha = isCollapsed ? 0 : 1
             }
         }
     }
@@ -290,6 +316,8 @@ final class HomeCard: UICollectionViewCell {
         UIView.performWithoutAnimation {
             applyTransform(headerViewModel: headerViewModel)
             miniatureContent.alpha = headerViewModel.isCollapsed ? 1 : 0
+            catBack.alpha = headerViewModel.isCollapsed ? 0 : 1
+            catFront.alpha = headerViewModel.isCollapsed ? 0 : 1
             contentView.layoutIfNeeded()
         }
     }

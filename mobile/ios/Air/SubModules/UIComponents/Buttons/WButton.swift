@@ -63,6 +63,9 @@ public class WButton: WBaseButton {
 
     private var hasCustomDisabledAttributedTitle = false
 
+    // 🐱 Ears on top of the button, in the button's color
+    private let catEars = CatButtonEars()
+
     private var accentColor: UIColor {
         customTintColor ?? window?.tintColor ?? AirTintColor
     }
@@ -122,6 +125,7 @@ public class WButton: WBaseButton {
         heightConstraint.isActive = true
 
         titleLabel?.font = resolvedTitleFont
+        catEars.install(on: self)
         updateTheme()
     }
 
@@ -353,17 +357,47 @@ public class WButton: WBaseButton {
             updateTitleColors()
         }
         loadingView?.tintColor = loadingIndicatorColor
+        setNeedsLayout()
     }
 
     public override func tintColorDidChange() {
         super.tintColorDidChange()
         loadingView?.tintColor = loadingIndicatorColor
+        setNeedsLayout()
     }
 
     public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
             loadingView?.tintColor = loadingIndicatorColor
+            setNeedsLayout()
+        }
+    }
+
+    public override var isHighlighted: Bool {
+        didSet {
+            catEars.setFlattened(isHighlighted)
+        }
+    }
+
+    private var catEarsColor: UIColor? {
+        if usesGlassButtonStyling {
+            let color: UIColor
+            switch style {
+            case .primary:
+                color = customTintColor ?? accentColor
+            case .destructive:
+                color = customTintColor ?? destructiveColor
+            default:
+                return nil
+            }
+            return isEnabled ? color : color.withAlphaComponent(0.5)
+        }
+        switch style {
+        case .primary, .destructive, .secondary:
+            return backgroundColor
+        default:
+            return nil
         }
     }
 
@@ -406,6 +440,7 @@ public class WButton: WBaseButton {
 
     public override func layoutSubviews() {
         super.layoutSubviews()
+        catEars.layout(in: bounds, color: catEarsColor, traitCollection: traitCollection)
 
         if IOS_26_MODE_ENABLED, #available(iOS 26, iOSApplicationExtension 26, *) {
             //

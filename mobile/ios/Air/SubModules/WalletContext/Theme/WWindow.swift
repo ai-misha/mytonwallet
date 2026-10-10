@@ -8,10 +8,30 @@
 import UIKit
 
 public final class WWindow: UIWindow, WSensitiveDataProtocol {
-    
+
+    /// 🐱 Paw prints and the peeking cat, above everything else in the window
+    private let catOverlay = CatOverlayView()
+
     public override init(windowScene: UIWindowScene) {
         super.init(windowScene: windowScene)
         backgroundColor = .black
+        catOverlay.frame = bounds
+        catOverlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        addSubview(catOverlay)
+    }
+
+    public override func didAddSubview(_ subview: UIView) {
+        super.didAddSubview(subview)
+        if subview !== catOverlay {
+            bringSubviewToFront(catOverlay)
+        }
+    }
+
+    public override func sendEvent(_ event: UIEvent) {
+        if event.type == .touches, let touches = event.allTouches {
+            catOverlay.handle(touches: touches)
+        }
+        super.sendEvent(event)
     }
     
     required init?(coder: NSCoder) {

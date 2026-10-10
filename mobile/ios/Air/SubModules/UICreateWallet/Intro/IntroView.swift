@@ -57,6 +57,7 @@ struct IntroView: View {
                 .onChange(of: isTouching) { isTouching in
                     if isTouching {
                         burstTrigger += 1
+                        CatSounds.meow()
                     }
                 }
                 .backportSensoryFeedback(value: isTouching)

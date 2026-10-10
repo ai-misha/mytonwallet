@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.SparseArray
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -41,6 +42,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import org.mytonwallet.app_air.uicomponents.AnimationConstants
+import org.mytonwallet.app_air.uicomponents.cat.CatOverlayView
 import org.mytonwallet.app_air.uicomponents.extensions.dp
 import org.mytonwallet.app_air.uicomponents.helpers.PopupHelpers
 import org.mytonwallet.app_air.uicomponents.helpers.TiltSensorManager
@@ -122,6 +124,9 @@ abstract class WWindow :
             }
         }
     }
+
+    // Paw prints and the peeking cat live above everything else in the window
+    private val catOverlayView: CatOverlayView by lazy { CatOverlayView(this) }
 
     abstract fun getKeyNavigationController(): WNavigationController
 
@@ -348,6 +353,11 @@ abstract class WWindow :
             return
         }
 
+        (window.decorView as? ViewGroup)?.addView(
+            catOverlayView,
+            ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+        )
+
         if (savedInstanceState == null) {
             replace(getKeyNavigationController(), true)
         } else {
@@ -388,6 +398,11 @@ abstract class WWindow :
 
         updateTheme()
         updateLayoutDirection()
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        ev?.let { catOverlayView.onWindowTouchEvent(it) }
+        return super.dispatchTouchEvent(ev)
     }
 
     protected fun notifyInsetsUpdated() {

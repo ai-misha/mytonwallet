@@ -26,7 +26,8 @@ public struct Checkmark: View {
                     .transition(.opacity
                         .combined(with: .scale(scale: 0.2))
                     )
-                Image(systemName: "checkmark")
+                // 🐾 A paw print instead of a check mark
+                Image(systemName: "pawprint.fill")
                     .foregroundForTintedBackground()
                     .textStyle(.badge, content: .technical)
                     .transition(.modifier(

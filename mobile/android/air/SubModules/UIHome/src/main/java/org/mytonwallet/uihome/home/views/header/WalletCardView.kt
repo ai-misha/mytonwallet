@@ -525,6 +525,14 @@ class WalletCardView(
         id = generateViewId()
     }
 
+    // 🐱 Ears and whiskers behind the card, paws in front of it
+    private val catEarsView = CatCardDecorView(context, CatCardDecorView.Layer.Back).apply {
+        id = generateViewId()
+    }
+    private val catPawsView = CatCardDecorView(context, CatCardDecorView.Layer.Front).apply {
+        id = generateViewId()
+    }
+
     private val promoOverlayView = PromoCardOverlayView(context).apply {
         id = generateViewId()
         visibility = GONE
@@ -640,10 +648,14 @@ class WalletCardView(
         clipChildren = false
         clipToPadding = false
 
+        addView(catEarsView, LayoutParams(MATCH_CONSTRAINT, MATCH_CONSTRAINT))
         addView(contentView)
+        addView(catPawsView, LayoutParams(MATCH_CONSTRAINT, MATCH_CONSTRAINT))
 
         setConstraints {
             allEdgesPx(contentView, -1)
+            allEdges(catEarsView)
+            allEdges(catPawsView)
         }
 
         balanceView.onTotalWidthChanged = { width ->
@@ -1112,6 +1124,8 @@ class WalletCardView(
                     if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
                         artworkView.pressShine(x, y)
                         animatePress(x, y, 1f)
+                        catEarsView.onCardTouched()
+                        catPawsView.onCardTouched()
                     } else if (positionChanged && pressAnimator?.isRunning != true) {
                         animatePress(x, y, 1f)
                     }
@@ -1206,6 +1220,8 @@ class WalletCardView(
             miniPlaceholders.fadeOut(AnimationConstants.INSTANT_ANIMATION)
             shiningView.fadeIn(AnimationConstants.VERY_QUICK_ANIMATION)
             seasonalOverlayView.fadeIn(AnimationConstants.VERY_QUICK_ANIMATION)
+            catEarsView.fadeIn(AnimationConstants.VERY_QUICK_ANIMATION)
+            catPawsView.fadeIn(AnimationConstants.VERY_QUICK_ANIMATION)
             if (promoOverlayView.isVisible) {
                 promoOverlayView.fadeIn(AnimationConstants.VERY_QUICK_ANIMATION)
             }
@@ -1213,6 +1229,8 @@ class WalletCardView(
             miniPlaceholders.alpha = 0f
             shiningView.alpha = 1f
             seasonalOverlayView.alpha = 1f
+            catEarsView.alpha = 1f
+            catPawsView.alpha = 1f
             promoOverlayView.alpha = if (promoOverlayView.isVisible) 1f else 0f
         }
         updateCardEffects()
@@ -1228,6 +1246,8 @@ class WalletCardView(
             miniPlaceholders.fadeIn(AnimationConstants.VERY_QUICK_ANIMATION)
             shiningView.fadeOut(AnimationConstants.VERY_QUICK_ANIMATION)
             seasonalOverlayView.fadeOut(AnimationConstants.VERY_QUICK_ANIMATION)
+            catEarsView.fadeOut(AnimationConstants.VERY_QUICK_ANIMATION)
+            catPawsView.fadeOut(AnimationConstants.VERY_QUICK_ANIMATION)
             if (promoOverlayView.isVisible) {
                 promoOverlayView.fadeOut(AnimationConstants.VERY_QUICK_ANIMATION)
             }
@@ -1235,6 +1255,8 @@ class WalletCardView(
             miniPlaceholders.alpha = 1f
             shiningView.alpha = 0f
             seasonalOverlayView.alpha = 0f
+            catEarsView.alpha = 0f
+            catPawsView.alpha = 0f
             promoOverlayView.alpha = 0f
         }
     }

@@ -2,7 +2,7 @@
 <resources>
 
   <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBarLaunch.Base">
-    <item name="windowSplashScreenBackground">#FFFFFF</item>
+    <item name="windowSplashScreenBackground">#FBF3EA</item>
     <item name="android:windowSplashScreenBehavior">icon_preferred</item>
   </style>
 </resources>
