@@ -1,5 +1,5 @@
-# Builds the cat-themed apps from this branch: a debug APK for Android and an unsigned IPA
-# for sideloading on iOS. Unlike package-and-publish.yml, it needs no signing secrets and
+# Builds the cat-themed apps from this branch: an unsigned IPA for sideloading on iOS on every
+# push, and a debug APK for Android when the workflow is run manually. Unlike package-and-publish.yml, it needs no signing secrets and
 # runs on GitHub-hosted runners.
 name: Cat builds
 
@@ -16,6 +16,8 @@ env:
 jobs:
   android:
     name: Android debug APK
+    # Only on demand for now: run the workflow manually from the Actions tab to get an APK
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     concurrency:
