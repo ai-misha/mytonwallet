@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
 import android.graphics.Paint
-import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
@@ -13,18 +12,13 @@ import android.graphics.drawable.Drawable
 import android.view.animation.DecelerateInterpolator
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.withSave
-import kotlin.math.sqrt
+import org.mytonwallet.app_air.uicomponents.cat.CatPaw
 import org.mytonwallet.app_air.uicomponents.extensions.dp
 
 class CheckboxDrawable(private val invalidateCallback: (() -> Unit)? = null) : Drawable() {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val checkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeCap = Paint.Cap.ROUND
-        style = Paint.Style.STROKE
-        strokeJoin = Paint.Join.ROUND
-        strokeWidth = 1.9f.dp
-    }
+    private val pawPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 1.2f.dp
@@ -33,8 +27,6 @@ class CheckboxDrawable(private val invalidateCallback: (() -> Unit)? = null) : D
         color = 0
         xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     }
-
-    private val path = Path()
 
     private var progress = 0f
         set(value) {
@@ -126,37 +118,30 @@ class CheckboxDrawable(private val invalidateCallback: (() -> Unit)? = null) : D
             }
         }
 
-        // Draw checkmark
+        // A paw print stamped instead of a check mark 🐾
         if (checkProgress > 0) {
-            checkPaint.color = checkmarkColor
-            checkPaint.alpha = (255 * checkProgress).toInt()
-
-            val scale = 0.85f
-            val checkSide = 9f.dp * scale * checkProgress
-            val smallCheckSide = 4.5f.dp * scale * checkProgress
-            val x = cx - 1.5f.dp
-            val y = cy + 3f.dp
-
-            path.reset()
-            val smallSide = sqrt(smallCheckSide * smallCheckSide / 2.0f)
-            path.moveTo(x - smallSide, y - smallSide)
-            path.lineTo(x, y)
-            val largeSide = sqrt(checkSide * checkSide / 2.0f)
-            path.lineTo(x + largeSide, y - largeSide)
-
-            canvas.drawPath(path, checkPaint)
+            pawPaint.color = checkmarkColor
+            pawPaint.alpha = (255 * checkProgress).toInt()
+            CatPaw.draw(
+                canvas,
+                pawPaint,
+                cx,
+                cy,
+                radius * 1.3f * (0.5f + 0.5f * checkProgress),
+                -20f * (1f - checkProgress)
+            )
         }
     }
 
     override fun setAlpha(alpha: Int) {
         paint.alpha = alpha
-        checkPaint.alpha = alpha
+        pawPaint.alpha = alpha
         backgroundPaint.alpha = alpha
     }
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
         paint.colorFilter = colorFilter
-        checkPaint.colorFilter = colorFilter
+        pawPaint.colorFilter = colorFilter
         backgroundPaint.colorFilter = colorFilter
     }
 

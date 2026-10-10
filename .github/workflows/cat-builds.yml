@@ -1,0 +1,243 @@
+# Builds the cat-themed apps from this branch: an unsigned IPA for sideloading on iOS on every
+# push, and a debug APK for Android when the workflow is run manually. Unlike package-and-publish.yml, it needs no signing secrets and
+# runs on GitHub-hosted runners.
+name: Cat builds
+
+on:
+  push:
+    branches:
+      - cat-theme
+  workflow_dispatch:
+
+env:
+  # build_sdk.sh refuses to run in CI without it
+  AGENT_API_URL: https://agent.mywallet.io/api
+
+jobs:
+  android:
+    name: Android debug APK
+    # Only on demand for now: run the workflow manually from the Actions tab to get an APK
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: cat-android-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the mobile SDK
+        run: npm run mobile:build:staging
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Same caps as in package-and-publish.yml: the project's 4 GB Gradle heap plus the Kotlin
+      # daemon do not fit into a standard runner.
+      - name: Fit the Gradle JVMs into the runner's memory
+        run: |
+          mkdir -p ~/.gradle
+          {
+            echo 'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -XX:+HeapDumpOnOutOfMemoryError'
+            echo 'kotlin.daemon.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=512m'
+          } >> ~/.gradle/gradle.properties
+
+      # The debug build is signed with the debug key from the repository and installs next to
+      # the regular app (org.mytonwallet.app.debug)
+      - name: Build the APK
+        working-directory: mobile/android
+        run: ./gradlew :app:assembleMytonwalletProdDebug
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyTonWallet-cat-android
+          path: mobile/android/app/build/outputs/apk/mytonwalletProd/debug/*.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS unsigned IPA
+    # The same image the release pipeline uses: the app needs Xcode 27 (the Xcode 26 compiler
+    # crashes on UIHome, and its actool cannot read the Icon Composer app icon)
+    runs-on: xcode-27
+    timeout-minutes: 120
+    concurrency:
+      group: cat-ios-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      IOS_PREFERRED_SDK: "27.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Like the release pipeline: the oldest Xcode that carries the required iOS SDK (newer ones
+      # are betas nothing asked for), or the newest one available when none does, with a warning.
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          chosen=""
+          chosen_sdk=""
+          newest=""
+          newest_sdk=""
+          for app in /Applications/Xcode*.app; do
+            developer_dir="$app/Contents/Developer"
+            [ -d "$developer_dir" ] || continue
+            sdk=$(DEVELOPER_DIR="$developer_dir" xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)
+            [ -n "$sdk" ] || continue
+            echo "$app iphoneos$sdk"
+            if [ -z "$newest" ] || [ "$(printf '%s\n%s\n' "$sdk" "$newest_sdk" | sort -V | tail -1)" = "$sdk" ]; then
+              newest="$developer_dir"
+              newest_sdk="$sdk"
+            fi
+            [ "$(printf '%s\n%s\n' "$sdk" "$IOS_PREFERRED_SDK" | sort -V | head -1)" = "$IOS_PREFERRED_SDK" ] || continue
+            if [ -z "$chosen" ] || [ "$(printf '%s\n%s\n' "$sdk" "$chosen_sdk" | sort -V | head -1)" = "$sdk" ]; then
+              chosen="$developer_dir"
+              chosen_sdk="$sdk"
+            fi
+          done
+          if [ -z "$chosen" ]; then
+            if [ -z "$newest" ]; then
+              echo "::error::No Xcode with an iOS SDK found"
+              exit 1
+            fi
+            echo "::warning::No Xcode carries iOS SDK $IOS_PREFERRED_SDK, building with iOS SDK $newest_sdk"
+            chosen="$newest"
+            chosen_sdk="$newest_sdk"
+          fi
+          echo "Using $chosen (iphoneos$chosen_sdk)"
+          echo "DEVELOPER_DIR=$chosen" >> "$GITHUB_ENV"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the mobile SDK
+        run: npm run mobile:build:staging
+
+      # Same scheme as in package-and-publish.yml: the packages are restored and resolved in steps
+      # of their own, so they get cached even when the build that follows fails. They stay under the
+      # derived data root, where the Crashlytics script phase looks for them.
+      - name: Restore resolved Swift packages
+        id: spm-cache
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/derived-data/SourcePackages
+          key: cat-ios-spm-${{ hashFiles('mobile/ios/**/Package.resolved') }}
+          restore-keys: |
+            cat-ios-spm-
+
+      - name: Resolve Swift packages
+        id: spm-resolve
+        continue-on-error: true
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -workspace mobile/ios/App/App.xcworkspace \
+            -scheme MyTonWallet \
+            -derivedDataPath "$RUNNER_TEMP/derived-data"
+
+      - name: Save resolved Swift packages
+        if: steps.spm-resolve.outcome == 'success' && steps.spm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/derived-data/SourcePackages
+          key: cat-ios-spm-${{ hashFiles('mobile/ios/**/Package.resolved') }}
+
+      # As in package-and-publish.yml: the image ships Xcode without it, and UIComponents has
+      # Metal shaders
+      - name: Install the Metal toolchain
+        run: |
+          xcodebuild -downloadComponent MetalToolchain
+          xcrun --sdk iphoneos metal --version
+
+      - name: Build the app
+        run: |
+          set -o pipefail
+          # The Release build ends with a script phase that uploads the symbols to the upstream
+          # Firebase project. A fork has no business there, so the uploader becomes a no-op.
+          crashlytics_run="$RUNNER_TEMP/derived-data/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run"
+          if [ -f "$crashlytics_run" ]; then
+            chmod u+w "$crashlytics_run"
+            printf '#!/bin/sh\necho "Crashlytics symbol upload skipped"\n' > "$crashlytics_run"
+          fi
+          # One run should show every broken target, not only the first one
+          defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
+          xcodebuild \
+            -workspace mobile/ios/App/App.xcworkspace \
+            -scheme MyTonWallet \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/derived-data" \
+            -skipMacroValidation \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | xcbeautify --renderer github-actions
+
+      # xcbeautify drops every line it does not recognize, and the reason for a failure is often
+      # among them, so the raw log gets searched here
+      - name: Show the build errors
+        if: failure()
+        run: |
+          log="$RUNNER_TEMP/xcodebuild.log"
+          [ -f "$log" ] || exit 0
+          echo "=== Lines with errors"
+          grep -n -E "error:|fatal error|Command .* failed|Stack dump|signal [0-9]+|BUILD FAILED" "$log" | head -n 300 || true
+          echo "=== Failed build commands"
+          sed -n '/The following build commands failed/,$p' "$log" | head -n 100
+          echo "=== Compiler crashes"
+          grep -n -B 2 -A 14 -m 5 "Stack dump:" "$log" | head -n 120 || true
+          echo "=== The first errors in context"
+          grep -n -B 4 -A 12 -m 25 -E "error:" "$log" | head -n 700 || true
+          echo "=== The end of the log"
+          tail -n 60 "$log" | sed 's/^/  /'
+
+      - name: Upload the build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: ${{ runner.temp }}/xcodebuild.log
+
+      # Unsigned: sign it with your own certificate when sideloading (AltStore, Sideloadly and so on)
+      - name: Package the IPA
+        run: |
+          set -euo pipefail
+          app=$(find "$RUNNER_TEMP/derived-data/Build/Products/Release-iphoneos" -maxdepth 1 -name "*.app" | head -1)
+          if [ -z "$app" ]; then
+            echo "::error::No .app in the build products"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$app" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/MyTonWallet-cat-unsigned.ipa" Payload)
+
+      - name: Upload the IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyTonWallet-cat-ios
+          path: MyTonWallet-cat-unsigned.ipa
+          if-no-files-found: error

@@ -1,0 +1,327 @@
+// Cat theme 🐾
+// Warm "ginger cat" palette, paw-print cursor and background, cat-ish selection and scrollbars.
+// Loaded after `variables.scss`, so the declarations below override the stock palette with the same specificity.
+
+@use "mixins";
+
+// Paw silhouette (24 × 24): one main pad and four toe beans
+$pawPath: "%3Cellipse cx='12' cy='16.2' rx='5.4' ry='4.5'/%3E%3Cellipse cx='4.9' cy='10.6' rx='2.2' ry='2.9' transform='rotate(-22 4.9 10.6)'/%3E%3Cellipse cx='9.3' cy='5.9' rx='2.35' ry='3.05' transform='rotate(-6 9.3 5.9)'/%3E%3Cellipse cx='14.7' cy='5.9' rx='2.35' ry='3.05' transform='rotate(6 14.7 5.9)'/%3E%3Cellipse cx='19.1' cy='10.6' rx='2.2' ry='2.9' transform='rotate(22 19.1 10.6)'/%3E";
+
+@function paw-svg($fill) {
+  @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='#{$fill}'%3E#{$pawPath}%3C/svg%3E");
+}
+
+// Two paws per tile, walking diagonally
+
+@function paw-pattern($fill, $opacity) {
+  @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='#{$fill}' fill-opacity='#{$opacity}'%3E%3Cg transform='translate(22 26) rotate(-24 12 12) scale(1.05)'%3E#{$pawPath}%3C/g%3E%3Cg transform='translate(56 46) rotate(-14 12 12) scale(0.95)'%3E#{$pawPath}%3C/g%3E%3Cg transform='translate(98 98) rotate(28 12 12) scale(1.05)'%3E#{$pawPath}%3C/g%3E%3Cg transform='translate(126 122) rotate(38 12 12) scale(0.9)'%3E#{$pawPath}%3C/g%3E%3C/svg%3E");
+}
+
+// Paw-shaped pointer with a white outline, hotspot on the top toes
+$pawCursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='-2 -2 28 28' fill='%23F28A3A' stroke='%23FFFFFF' stroke-width='1.6'%3E#{$pawPath}%3C/svg%3E");
+
+:root {
+  // Fur and skin of every cat in the app
+  --cat-fur: #F59A4B;
+  --cat-fur-dark: #D9772A;
+  --cat-fur-stripe: #E07F30;
+  --cat-skin: #FFB8C3;
+  --cat-nose: #FF8FA3;
+  --cat-eye: #3A2A1E;
+  --cat-eye-glow: #3A2A1E;
+  --cat-whisker: rgba(255, 255, 255, 0.85);
+  --cat-paw-print: rgba(242, 138, 58, 0.45);
+  --cat-paw-mask: #{paw-svg("%23000000")};
+
+  // Ginger accent
+  --color-default-accent: #F28A3A;
+  --color-default-accent-hover: #F28A3ACC;
+  --color-accent: #F28A3A;
+  --color-accent-10o: #F28A3A1A;
+  --color-default-accent-bg: #F28A3A14;
+
+  // Slightly warm text grays
+  --color-black: #33291F;
+  --color-black-rgb: 51, 41, 31;
+  --color-gray-1: #685F58;
+  --color-gray-1-10o: #685F581A;
+  --color-gray-2: #928881;
+  --color-gray-3: #ADA59F;
+  --color-gray-3-desktop: #BDB6B0;
+  --color-gray-4: #CFC8C2;
+
+  // Creamy backgrounds, like a warm cat bed
+  --color-background-second: #FBF3EA;
+  --color-background-window: #FBF3EA;
+  --color-background-tab-bar: #FBF3EACC;
+  --color-background-tab-bar-explore: #FBF3EAE5;
+  --color-background-blue-first: #FFF8F1;
+  --color-background-blue-second: #FBE0C8;
+
+  --color-input-button-text: #685F58;
+  --color-input-button-background: #F8F0E8;
+  --color-input-button-background-hover: #EFE3D7;
+
+  --color-accent-button-text: #FFFFFF;
+  --color-accent-button-text-hover: #FFFFFF;
+  --color-accent-button-background: #F28A3A;
+  --color-accent-button-background-hover: #FF9D52;
+
+  --color-secondary-button-text: #C2601A;
+  --color-secondary-button-text-hover: #C2601A;
+  --color-secondary-button-background-base: 252, 228, 206;
+  --color-secondary-button-background-hover: #F9D7BA;
+
+  --color-gray-button-text: #4A3F36;
+  --color-gray-button-text-hover: #3D332B;
+  --color-gray-button-background: #EFE6DD;
+  --color-gray-button-background-hover: #E6DACE;
+  --color-gray-button-background-light: #F1E9E1;
+  --color-gray-button-background-light-hover: #E8DDD2;
+  --color-gray-button-desktop-text: #5C3B22;
+  --color-gray-button-desktop-text-hover: #73502F;
+  --color-gray-button-desktop-background: #F3ECE5;
+  --color-gray-button-desktop-background-hover: #EAE0D6;
+
+  --color-close-button-background: #F1E9E1;
+  --color-close-button-background-hover: #E6DACE;
+
+  --color-activity-blue: #D9732A;
+  --color-activity-blue-background: #FBEDE1;
+
+  --color-transaction-amount-text: #C2601A;
+  --color-transaction-amount-bg: #F8E2CF;
+
+  --color-separator: rgba(92, 60, 30, 0.12);
+  --color-separator-input-stroke: rgba(92, 60, 30, 0.12);
+
+  --color-interactive-item-hover: #FFFAF5;
+  --color-interactive-popup-menu-hover: #FDF1E6;
+  --color-interactive-drop-down-menu-hover: #FDF6EF;
+  --color-interactive-drop-down-menu-active: #F7ECE1;
+
+  --color-tint-lock: rgba(251, 243, 234, 0.4);
+
+  --color-add-wallet-text: #685F58;
+  --color-add-wallet-background: #F8F0E8;
+
+  --cat-background-pattern: #{paw-pattern("%23C98A55", 0.09)};
+
+  &.theme-dark,
+  .component-theme-dark {
+    --cat-fur: #E8893E;
+    --cat-fur-dark: #B9611F;
+    --cat-fur-stripe: #C96F28;
+    --cat-skin: #E89AA6;
+    --cat-nose: #F07F94;
+    --cat-eye: #1A120C;
+    // Cats' eyes glow in the dark
+    --cat-eye-glow: #C9F25A;
+    --cat-whisker: rgba(255, 255, 255, 0.7);
+    --cat-paw-print: rgba(255, 162, 92, 0.4);
+
+    --color-default-accent: #FF9A4D;
+    --color-default-accent-hover: #FF9A4DCC;
+    --color-accent: #FF9A4D;
+    --color-accent-10o: #FF9A4D1A;
+    --color-default-accent-bg: #FF9A4D14;
+
+    --color-black: #F8F2EC;
+    --color-black-rgb: 248, 242, 236;
+    --color-gray-1: #C6BEB7;
+    --color-gray-1-10o: #C6BEB71A;
+    --color-gray-2: #8F8780;
+    --color-gray-3: #686059;
+    --color-gray-3-desktop: #8F8780;
+    --color-gray-4: #554D47;
+
+    --color-background-first: #1E1916;
+    --color-background-first-disabled: #15110F;
+    --color-background-second: #0E0B09;
+    --color-background-window: #14100D;
+    --color-background-drop-down: #26201C;
+    --color-background-tab-bar: #1E1916E5;
+    --color-background-tab-bar-explore: #14100DE5;
+    --color-background-first-blur: #1E1916E5;
+    --color-background-lock: rgba(30, 25, 22, 0.8);
+    --color-background-blurred: rgba(30, 25, 22, 0.87);
+
+    --color-input-button-text: #C6BEB7;
+    --color-input-button-background: #26201C;
+    --color-input-button-background-hover: #2F2823;
+
+    --color-accent-button-background: #FF9A4D;
+    --color-accent-button-background-hover: #FFAD6B;
+
+    --color-secondary-button-text: #FFB27A;
+    --color-secondary-button-text-hover: #FFC296;
+    --color-secondary-button-background-base: 74, 48, 28;
+    --color-secondary-button-background-hover: #5A3A22;
+
+    --color-gray-button-text: #E8DED6;
+    --color-gray-button-text-hover: #F5EDE6;
+    --color-gray-button-background: #2E2722;
+    --color-gray-button-background-hover: #3A312B;
+    --color-gray-button-background-light: #2A231F;
+    --color-gray-button-background-light-hover: #352D28;
+    --color-gray-button-desktop-text: #F0D9C5;
+    --color-gray-button-desktop-text-hover: #FFE8D4;
+    --color-gray-button-desktop-background: #2A231F;
+    --color-gray-button-desktop-background-hover: #352D28;
+
+    --color-close-button-background: #2E2722;
+    --color-close-button-background-hover: #3A312B;
+
+    --color-activity-blue: #FFA866;
+    --color-activity-blue-background: #3A2717;
+
+    --color-transaction-amount-text: #FFB27A;
+    --color-transaction-amount-bg: #3D2A1B;
+
+    --color-separator: rgba(255, 236, 220, 0.1);
+    --color-separator-input-stroke: rgba(255, 236, 220, 0.1);
+
+    --color-interactive-item-hover: #241E1A;
+    --color-interactive-popup-menu-hover: #2C241E;
+    --color-interactive-drop-down-menu-hover: #2A231F;
+    --color-interactive-drop-down-menu-active: #322A24;
+
+    --color-tint-lock: rgba(14, 11, 9, 0.4);
+
+    --color-add-wallet-text: #C6BEB7;
+    --color-add-wallet-background: #26201C;
+
+    --cat-background-pattern: #{paw-pattern("%23FFB27A", 0.06)};
+  }
+}
+
+html:not(.is-electron) {
+  @media (hover: hover) and (pointer: fine) {
+    --custom-cursor: #{$pawCursor} 14 6, pointer;
+  }
+}
+
+body {
+  background-image: var(--cat-background-pattern);
+  background-repeat: repeat;
+  background-size: 10rem 10rem;
+}
+
+::selection {
+  color: #FFFFFF;
+  background-color: var(--color-accent);
+}
+
+.custom-scroll,
+.custom-scroll-x {
+  &:hover,
+  &:focus,
+  &:focus-within {
+    scrollbar-color: var(--color-accent-10o) transparent;
+
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--color-accent);
+    }
+  }
+}
+
+// Utility for anything that wants to look like a paw
+.cat-paw-icon {
+  display: inline-block;
+
+  width: 1em;
+  height: 1em;
+
+  vertical-align: -0.125em;
+
+  background-color: currentColor;
+
+  mask: var(--cat-paw-mask) center / contain no-repeat;
+}
+
+// Paw prints left behind by taps and clicks, see `CatOverlay`
+.cat-paw-print {
+  pointer-events: none;
+
+  position: fixed;
+  z-index: var(--z-toast);
+  top: 0;
+  left: 0;
+
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: -0.625rem 0 0 -0.625rem;
+
+  background-color: var(--cat-paw-print);
+
+  mask: var(--cat-paw-mask) center / contain no-repeat;
+
+  animation: cat-paw-print 900ms ease-out forwards;
+}
+
+@keyframes cat-paw-print {
+  0% {
+    transform: translate(var(--paw-x), var(--paw-y)) rotate(var(--paw-rotation)) scale(0.4);
+    opacity: 0;
+  }
+
+  15% {
+    transform: translate(var(--paw-x), var(--paw-y)) rotate(var(--paw-rotation)) scale(1.1);
+    opacity: 1;
+  }
+
+  30% {
+    transform: translate(var(--paw-x), var(--paw-y)) rotate(var(--paw-rotation)) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--paw-x), var(--paw-y)) rotate(var(--paw-rotation)) scale(1);
+    opacity: 0;
+  }
+}
+
+// Emoji rain for the "meow" easter egg, see `CatOverlay`
+.cat-rain-drop {
+  pointer-events: none;
+
+  position: fixed;
+  z-index: var(--z-toast);
+  top: -3rem;
+  left: 0;
+
+  font-size: 2rem;
+
+  animation: cat-rain var(--rain-duration, 2600ms) cubic-bezier(0.4, 0, 0.8, 0.6) forwards;
+}
+
+@keyframes cat-rain {
+  0% {
+    transform: translate(var(--rain-x), 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(calc(var(--rain-x) + var(--rain-drift)), calc(100vh + 6rem)) rotate(var(--rain-spin));
+    opacity: 0;
+  }
+}
+
+html.animation-level-0 {
+  .cat-paw-print,
+  .cat-rain-drop {
+    display: none;
+  }
+}
+
+@include mixins.respond-below(xs) {
+  .cat-paw-print {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -0.75rem 0 0 -0.75rem;
+  }
+}

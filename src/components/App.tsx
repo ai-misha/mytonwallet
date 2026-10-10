@@ -43,6 +43,7 @@ import AppInactive from './AppInactive';
 import AppLocked from './appLocked/AppLocked';
 import Auth from './auth/Auth';
 import AuthImportWalletModal from './auth/AuthImportWalletModal';
+import CatOverlay from './cat/CatOverlay';
 import CustomizeWalletModal from './customizeWallet/CustomizeWalletModal';
 import DappConnectModal from './dapps/DappConnectModal';
 import DappSignDataModal from './dapps/DappSignDataModal';
@@ -316,6 +317,7 @@ function App({
         </>
       )}
       {withBottomBar && <BottomBar />}
+      <CatOverlay />
     </>
   );
 }

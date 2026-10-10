@@ -18,6 +18,7 @@ import me.vkryl.core.alphaColor
 import me.vkryl.core.fromTo
 import me.vkryl.core.fromToArgb
 import org.mytonwallet.app_air.uicomponents.AnimationConstants
+import org.mytonwallet.app_air.uicomponents.cat.CatButtonEars
 import org.mytonwallet.app_air.uicomponents.drawable.RoundProgressDrawable
 import org.mytonwallet.app_air.uicomponents.drawable.WRippleDrawable
 import org.mytonwallet.app_air.uicomponents.extensions.dp
@@ -34,6 +35,7 @@ class WButton(context: Context) :
     WThemedView {
     private val ripple = WRippleDrawable.create(120f.dp)
     private val progressDrawable = RoundProgressDrawable()
+    private val catEars = CatButtonEars(this)
     var buttonHeight = 50.dp
     var clickableError = false
 
@@ -168,6 +170,21 @@ class WButton(context: Context) :
         )
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        catEars.onAttachedToWindow()
+    }
+
+    override fun onDetachedFromWindow() {
+        catEars.onDetachedFromWindow()
+        super.onDetachedFromWindow()
+    }
+
+    override fun drawableStateChanged() {
+        super.drawableStateChanged()
+        catEars.setPressed(isPressed)
+    }
+
     override fun verifyDrawable(who: Drawable): Boolean {
         if (who == progressDrawable && isLoadingAnimator.floatValue > 0) {
             return true
@@ -178,6 +195,7 @@ class WButton(context: Context) :
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        catEars.draw(canvas, ripple.backgroundColor)
 
         val scale = 1f - isLoadingAnimator.floatValue
         val needProgress = isLoadingAnimator.floatValue > 0

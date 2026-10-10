@@ -1,4 +1,6 @@
-import React, { memo, useLayoutEffect, useRef, useState } from '../../lib/teact/teact';
+import React, {
+  memo, useEffect, useLayoutEffect, useRef, useState,
+} from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
 import { type Theme } from '../../global/types';
@@ -10,6 +12,7 @@ import {
 import renderText from '../../global/helpers/renderText';
 import { selectCurrentAccountId } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
+import { playMeow } from '../../util/cat/meow';
 import { stopEvent } from '../../util/domEvents';
 import { PARTICLE_BURST_PARAMS, type ParticleConfig, setupParticles } from '../../util/particles';
 import {
@@ -25,13 +28,13 @@ import useMediaTransition from '../../hooks/useMediaTransition';
 import { CLOSE_DURATION } from '../../hooks/useShowTransition';
 import useTimeout from '../../hooks/useTimeout';
 
+import CatHead from '../cat/CatHead';
 import Button from '../ui/Button';
 import Checkbox from '../ui/Checkbox';
 import { PARTICLE_HEIGHT, PARTICLE_LANDSCAPE_HEIGHT } from '../ui/ImageWithParticles';
 
 import styles from './Auth.module.scss';
 
-import logoWebpPath from '../../assets/logo.webp';
 import gramWalletLogoPath from '../../assets/logoGramWallet.svg';
 
 interface OwnProps {
@@ -52,8 +55,9 @@ const PARTICLE_PARAMS: Partial<ParticleConfig> = {
   distanceLimit: 0.75,
 };
 
-const PARTICLE_COLORS_LIGHT = [44 / 255, 146 / 255, 240 / 255] as [number, number, number]; // #2C92F0
-const PARTICLE_COLORS_DARK = [70 / 255, 156 / 255, 236 / 255] as [number, number, number]; // #469CEC
+const PARTICLE_COLORS_LIGHT = [242 / 255, 138 / 255, 58 / 255] as [number, number, number]; // #F28A3A
+const PARTICLE_COLORS_DARK = [255 / 255, 154 / 255, 77 / 255] as [number, number, number]; // #FF9A4D
+const CAT_HAPPY_DURATION = 1400;
 
 const NEW_DOMAIN = new URL(PRODUCTION_URL).hostname;
 
@@ -78,9 +82,17 @@ function AuthStart({
   const [isLogoReady, markLogoReady] = useFlag();
   const [isLogoAnimated, markLogoAnimated] = useFlag();
   const logoRef = useMediaTransition<HTMLImageElement>(isLogoReady);
+  const catLogoRef = useMediaTransition<HTMLDivElement>(isLogoReady);
+  const [isCatHappy, setIsCatHappy] = useState(false);
   const [isAccepted, setIsAccepted] = useState(false);
 
   useTimeout(markLogoAnimated, isLogoReady ? CLOSE_DURATION : undefined, [isLogoReady]);
+  useTimeout(() => setIsCatHappy(false), isCatHappy ? CAT_HAPPY_DURATION : undefined, [isCatHappy]);
+
+  // The cat logo is an inline SVG, so there is nothing to wait for
+  useEffect(() => {
+    if (!IS_GRAM_WALLET) markLogoReady();
+  }, [markLogoReady]);
 
   useLayoutEffect(() => {
     if (!isActive) return;
@@ -99,6 +111,11 @@ function AuthStart({
       ...PARTICLE_BURST_PARAMS,
       height: isLandscape ? PARTICLE_LANDSCAPE_HEIGHT : PARTICLE_HEIGHT,
     });
+
+    if (!IS_GRAM_WALLET) {
+      playMeow();
+      setIsCatHappy(true);
+    }
   });
 
   function handleDisclaimerClick(e: React.MouseEvent<HTMLAnchorElement>) {
@@ -143,16 +160,30 @@ function AuthStart({
           onClick={handleParticlesClick}
         >
           <canvas ref={canvasRef} className={styles.logoParticles} />
-          <img
-            ref={logoRef}
-            src={IS_GRAM_WALLET ? gramWalletLogoPath : logoWebpPath}
-            alt={APP_NAME}
-            className={buildClassName(
-              styles.logo,
-              isLogoAnimated && styles.logoReadyToScale,
-            )}
-            onLoad={markLogoReady}
-          />
+          {IS_GRAM_WALLET ? (
+            <img
+              ref={logoRef}
+              src={gramWalletLogoPath}
+              alt={APP_NAME}
+              className={buildClassName(
+                styles.logo,
+                isLogoAnimated && styles.logoReadyToScale,
+              )}
+              onLoad={markLogoReady}
+            />
+          ) : (
+            <div
+              ref={catLogoRef}
+              className={buildClassName(
+                styles.logo,
+                styles.catLogo,
+                isLogoAnimated && styles.logoReadyToScale,
+              )}
+              aria-label={APP_NAME}
+            >
+              <CatHead isHappy={isCatHappy} />
+            </div>
+          )}
         </div>
 
         <div className={buildClassName(styles.appName, 'brand-font')}>{APP_NAME}</div>

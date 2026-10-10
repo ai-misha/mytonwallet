@@ -27,6 +27,7 @@ import me.vkryl.android.animatorx.BoolAnimator
 import org.mytonwallet.app_air.uicomponents.AnimationConstants
 import org.mytonwallet.app_air.uicomponents.base.WViewController
 import org.mytonwallet.app_air.uicomponents.base.WWindow
+import org.mytonwallet.app_air.uicomponents.cat.CatHeadDrawable
 import org.mytonwallet.app_air.uicomponents.drawable.RoundProgressDrawable
 import org.mytonwallet.app_air.uicomponents.drawable.SeparatorBackgroundDrawable
 import org.mytonwallet.app_air.uicomponents.extensions.dp
@@ -53,7 +54,6 @@ import org.mytonwallet.app_air.walletbasecontext.theme.ThemeManager
 import org.mytonwallet.app_air.walletbasecontext.theme.ViewConstants
 import org.mytonwallet.app_air.walletbasecontext.theme.WColor
 import org.mytonwallet.app_air.walletbasecontext.theme.color
-import org.mytonwallet.app_air.walletbasecontext.utils.getDrawableCompat
 import org.mytonwallet.app_air.walletcontext.globalStorage.WGlobalStorage
 import org.mytonwallet.app_air.walletcontext.helpers.BiometricHelpers
 import org.mytonwallet.app_air.walletcontext.secureStorage.WSecureStorage
@@ -762,12 +762,8 @@ class PasscodeScreenView(
                 if (passcodeViewState.light ?: ThemeManager.isDark) Color.WHITE else Color.BLACK
             containerVC.window?.forceStatusBarLight = passcodeViewState.light
             containerVC.window?.forceBottomBarLight = passcodeViewState.light
-            val lockDrawable = context.getDrawableCompat(
-                org.mytonwallet.app_air.icons.R.drawable.ic_lock
-            )?.apply {
-                setTint(color)
-            }
-            topImageView.setImageDrawable(lockDrawable)
+            // 🐱 The wallet is locked, so the cat is asleep
+            topImageView.setImageDrawable(CatHeadDrawable().apply { isSleeping = true })
             titleTextView.setTextColor(color)
             subTitleTextView.setTextColor(color)
         } else if (passcodeViewState is PasscodeViewState.CustomHeader) {

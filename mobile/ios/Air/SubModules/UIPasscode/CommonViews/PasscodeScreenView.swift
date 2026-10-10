@@ -166,13 +166,17 @@ public class PasscodeScreenView: UIView {
         if !compactLayout {
             let lockImageView = UIImageView()
             self.lockImageView = lockImageView
-            lockImageView.image = UIImage(systemName: "lock.fill")
+            // 🐱 The wallet is locked, so the cat is asleep
+            lockImageView.image = CatHeadRenderer.image(
+                size: CGSize(width: 56, height: 50),
+                pose: CatHeadPose(isSleeping: true),
+                traitCollection: traitCollection
+            )
             lockImageView.contentMode = .scaleAspectFit
-            lockImageView.tintColor = matchHeaderColors ? unlockScreenTintColor : UIColor.label
             lockImageView.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                lockImageView.widthAnchor.constraint(equalToConstant: 24),
-                lockImageView.heightAnchor.constraint(equalToConstant: 24)
+                lockImageView.widthAnchor.constraint(equalToConstant: 56),
+                lockImageView.heightAnchor.constraint(equalToConstant: 50)
             ])
             unlockView.addArrangedSubview(lockImageView)
             unlockView.setCustomSpacing(40, after: lockImageView)
