@@ -1,0 +1,162 @@
+# Builds the cat-themed apps from this branch: a debug APK for Android and an unsigned IPA
+# for sideloading on iOS. Unlike package-and-publish.yml, it needs no signing secrets and
+# runs on GitHub-hosted runners.
+name: Cat builds
+
+on:
+  push:
+    branches:
+      - cat-theme
+  workflow_dispatch:
+
+concurrency:
+  group: cat-builds-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # build_sdk.sh refuses to run in CI without it
+  AGENT_API_URL: https://agent.mywallet.io/api
+
+jobs:
+  android:
+    name: Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the mobile SDK
+        run: npm run mobile:build:staging
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Same caps as in package-and-publish.yml: the project's 4 GB Gradle heap plus the Kotlin
+      # daemon do not fit into a standard runner.
+      - name: Fit the Gradle JVMs into the runner's memory
+        run: |
+          mkdir -p ~/.gradle
+          {
+            echo 'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -XX:+HeapDumpOnOutOfMemoryError'
+            echo 'kotlin.daemon.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=512m'
+          } >> ~/.gradle/gradle.properties
+
+      # The debug build is signed with the debug key from the repository and installs next to
+      # the regular app (org.mytonwallet.app.debug)
+      - name: Build the APK
+        working-directory: mobile/android
+        run: ./gradlew :app:assembleMytonwalletProdDebug
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyTonWallet-cat-android
+          path: mobile/android/app/build/outputs/apk/mytonwalletProd/debug/*.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS unsigned IPA
+    runs-on: macos-26
+    timeout-minutes: 120
+    env:
+      IOS_REQUIRED_SDK: "27.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select an Xcode carrying the required iOS SDK
+        run: |
+          set -euo pipefail
+          chosen=""
+          chosen_sdk=""
+          installed=""
+          for app in /Applications/Xcode*.app; do
+            developer_dir="$app/Contents/Developer"
+            [ -d "$developer_dir" ] || continue
+            sdk=$(DEVELOPER_DIR="$developer_dir" xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)
+            [ -n "$sdk" ] || continue
+            installed="$installed$app iphoneos$sdk"$'\n'
+            [ "$(printf '%s\n%s\n' "$sdk" "$IOS_REQUIRED_SDK" | sort -V | head -1)" = "$IOS_REQUIRED_SDK" ] || continue
+            if [ -z "$chosen" ] || [ "$(printf '%s\n%s\n' "$sdk" "$chosen_sdk" | sort -V | head -1)" = "$sdk" ]; then
+              chosen="$developer_dir"
+              chosen_sdk="$sdk"
+            fi
+          done
+          printf 'Installed:\n%s' "$installed"
+          if [ -z "$chosen" ]; then
+            echo "::error::No installed Xcode carries iOS SDK $IOS_REQUIRED_SDK"
+            exit 1
+          fi
+          echo "Using $chosen (iphoneos$chosen_sdk)"
+          echo "DEVELOPER_DIR=$chosen" >> "$GITHUB_ENV"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the mobile SDK
+        run: npm run mobile:build:staging
+
+      - name: Build the app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace mobile/ios/App/App.xcworkspace \
+            -scheme MyTonWallet \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/derived-data" \
+            -skipMacroValidation \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | xcbeautify --renderer github-actions
+
+      - name: Upload the build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: ${{ runner.temp }}/xcodebuild.log
+
+      # Unsigned: sign it with your own certificate when sideloading (AltStore, Sideloadly and so on)
+      - name: Package the IPA
+        run: |
+          set -euo pipefail
+          app=$(find "$RUNNER_TEMP/derived-data/Build/Products/Release-iphoneos" -maxdepth 1 -name "*.app" | head -1)
+          if [ -z "$app" ]; then
+            echo "::error::No .app in the build products"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$app" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/MyTonWallet-cat-unsigned.ipa" Payload)
+
+      - name: Upload the IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyTonWallet-cat-ios
+          path: MyTonWallet-cat-unsigned.ipa
+          if-no-files-found: error
